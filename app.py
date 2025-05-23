@@ -15,8 +15,10 @@ questions = [
     "Have your thoughts and expectations (negative or positive) about yourself influenced your actions and contributed to making those expectations a reality?"
 ]
 
+# Initialize session state early — before usage
 if "index" not in st.session_state:
     st.session_state.index = 0
+if "counts" not in st.session_state:
     st.session_state.counts = {"yes": [0]*len(questions), "no": [0]*len(questions)}
 
 st.title("Interactive Media Art: Response Cycle")
@@ -34,10 +36,9 @@ elif col2.button("No"):
 if response:
     st.session_state.counts[response][st.session_state.index] += 1
     st.session_state.index = (st.session_state.index + 1) % len(questions)
-    st.experimental_set_query_params(updated="true")  # triggers a soft update
-    st.stop()  # stop execution so page refreshes safely
+    st.experimental_set_query_params(updated="true")
+    st.stop()
 
-# Layout charts side-by-side
 col1, col2 = st.columns(2)
 
 with col1:
