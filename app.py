@@ -15,7 +15,7 @@ questions = [
     "Have your thoughts and expectations (negative or positive) about yourself influenced your actions and contributed to making those expectations a reality?"
 ]
 
-# Initialize session state early — before usage
+# Initialize session state early
 if "index" not in st.session_state:
     st.session_state.index = 0
 if "counts" not in st.session_state:
@@ -36,7 +36,6 @@ elif col2.button("No"):
 if response:
     st.session_state.counts[response][st.session_state.index] += 1
     st.session_state.index = (st.session_state.index + 1) % len(questions)
-    st.experimental_set_query_params(updated="true")
     st.stop()
 
 col1, col2 = st.columns(2)
