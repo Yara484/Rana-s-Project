@@ -24,15 +24,18 @@ st.title("Interactive Media Art: Response Cycle")
 st.markdown(f"### Q{st.session_state.index+1}: {questions[st.session_state.index]}")
 
 col1, col2 = st.columns(2)
-if col1.button("Yes"):
-    st.session_state.counts["yes"][st.session_state.index] += 1
-    st.session_state.index = (st.session_state.index + 1) % len(questions)
-    st.experimental_rerun()
 
-if col2.button("No"):
-    st.session_state.counts["no"][st.session_state.index] += 1
+response = None
+if col1.button("Yes"):
+    response = "yes"
+elif col2.button("No"):
+    response = "no"
+
+if response:
+    st.session_state.counts[response][st.session_state.index] += 1
     st.session_state.index = (st.session_state.index + 1) % len(questions)
-    st.experimental_rerun()
+    st.experimental_set_query_params(updated="true")  # triggers a soft update
+    st.stop()  # stop execution so page refreshes safely
 
 # Layout charts side-by-side
 col1, col2 = st.columns(2)
