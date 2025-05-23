@@ -1,6 +1,5 @@
 import streamlit as st
 import plotly.graph_objs as go
-#
 
 questions = [
     "Have you ever felt worthy of love from your parents only when you pleased them by grades, titles, prizes, etc.?",
@@ -16,28 +15,31 @@ questions = [
     "Have your thoughts and expectations (negative or positive) about yourself influenced your actions and contributed to making those expectations a reality?"
 ]
 
-# Initialize session state early
+# Initialize session state only once
 if "index" not in st.session_state:
     st.session_state.index = 0
 if "counts" not in st.session_state:
     st.session_state.counts = {"yes": [0]*len(questions), "no": [0]*len(questions)}
 
+def handle_response():
+    choice = st.session_state["choice"]
+    st.session_state.counts[choice][st.session_state.index] += 1
+    st.session_state.index = (st.session_state.index + 1) % len(questions)
+    # Clear choice for next question
+    st.session_state["choice"] = None
+
 st.title("Interactive Media Art: Response Cycle")
 
-st.markdown(f"### Q{st.session_state.index+1}: {questions[st.session_state.index]}")
+st.markdown(f"### Q{st.session_state.index + 1}: {questions[st.session_state.index]}")
 
-col1, col2 = st.columns(2)
-
-response = None
-if col1.button("Yes"):
-    response = "yes"
-elif col2.button("No"):
-    response = "no"
-
-if response:
-    st.session_state.counts[response][st.session_state.index] += 1
-    st.session_state.index = (st.session_state.index + 1) % len(questions)
-    st.stop()
+with st.form(key='response_form', clear_on_submit=True):
+    st.radio(
+        label="Select your answer:",
+        options=["yes", "no"],
+        key="choice",
+        horizontal=True
+    )
+    submitted = st.form_submit_button("Submit", on_click=handle_response)
 
 col1, col2 = st.columns(2)
 
