@@ -1,8 +1,8 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
+import plotly.graph_objs as go
+import random
 
-# Questions list
+# Updated question list
 questions = [
     "Have you ever felt worthy of love from your parents only when you pleased them by grades, titles, prizes, etc.?",
     "Did your parents expectations make you feel like you’re lying to yourself about your capabilities?",
@@ -17,100 +17,97 @@ questions = [
     "If you have a sibling from the other gender, have you ever felt discriminated against because of this reason?"
 ]
 
-# Colors for Yes/No for each question (pairs)
+# Generate dummy yes/no counts
+yes_counts = [random.randint(5, 20) for _ in range(len(questions))]
+no_counts = [random.randint(5, 20) for _ in range(len(questions))]
+
+# Define unique colors for each question
 color_pairs = [
-    ("#FF69B4", "#90EE90"), ("#FFD700", "#00CED1"), ("#FF4500", "#7B68EE"),
-    ("#FF1493", "#ADFF2F"), ("#1E90FF", "#F08080"), ("#20B2AA", "#FFA07A"),
-    ("#BA55D3", "#5F9EA0"), ("#FF6347", "#48D1CC"), ("#DA70D6", "#66CDAA"),
-    ("#FF8C00", "#6A5ACD"), ("#7FFF00", "#DC143C")
+    ("#ff69b4", "#1e90ff"), ("#32cd32", "#006400"), ("#ffa500", "#8b0000"),
+    ("#9370db", "#4b0082"), ("#00ced1", "#2f4f4f"), ("#ffd700", "#b8860b"),
+    ("#ff7f50", "#dc143c"), ("#00fa9a", "#008080"), ("#ba55d3", "#9400d3"),
+    ("#20b2aa", "#4682b4"), ("#ff6347", "#800000")
 ]
 
-# Initialize session state
-if "question_index" not in st.session_state:
-    st.session_state.question_index = 0
-if "responses" not in st.session_state:
-    st.session_state.responses = []
+# Initialize layout
+st.set_page_config(layout="wide")
 
-# Display current question
-q_num = st.session_state.question_index + 1
-st.markdown(
-    f"<p style='text-align: center; font-size:20px;'>(Q{q_num}) {questions[st.session_state.question_index]}</p>",
-    unsafe_allow_html=True
+# Display questions and voting buttons
+st.markdown("### **Questions** (Click 'Yes' or 'No' for each):", unsafe_allow_html=True)
+for i, question in enumerate(questions):
+    cols = st.columns([4, 1, 1])
+    with cols[0]:
+        st.markdown(f"<span style='font-size:13px'>{question}</span>", unsafe_allow_html=True)
+    with cols[1]:
+        if cols[1].button("Yes", key=f"yes_{i}"):
+            yes_counts[i] += 1
+    with cols[2]:
+        if cols[2].button("No", key=f"no_{i}"):
+            no_counts[i] += 1
+
+# Prepare bubble chart data
+bubble_x, bubble_y, bubble_size, bubble_color, bubble_label = [], [], [], [], []
+
+for i, q in enumerate(questions):
+    bubble_x.append(random.uniform(-1, 1) * 10)
+    bubble_y.append(random.uniform(-1, 1) * 10)
+    bubble_size.append(yes_counts[i] * 3 + 10)
+    bubble_color.append(color_pairs[i][0])
+    bubble_label.append(f"{q[:40]}... - Yes: {yes_counts[i]}")
+
+    bubble_x.append(random.uniform(-1, 1) * 10)
+    bubble_y.append(random.uniform(-1, 1) * 10)
+    bubble_size.append(no_counts[i] * 3 + 10)
+    bubble_color.append(color_pairs[i][1])
+    bubble_label.append(f"{q[:40]}... - No: {no_counts[i]}")
+
+bubble_fig = go.Figure(data=[go.Scatter(
+    x=bubble_x,
+    y=bubble_y,
+    mode='markers',
+    marker=dict(
+        size=bubble_size,
+        color=bubble_color,
+        sizemode='diameter',
+        opacity=0.7,
+        line=dict(width=2, color='white')
+    ),
+    text=bubble_label,
+    hoverinfo='text'
+)])
+bubble_fig.update_layout(
+    title="Bubble Chart (Scattered Layout)",
+    showlegend=False,
+    xaxis=dict(showgrid=False, zeroline=False, visible=False),
+    yaxis=dict(showgrid=False, zeroline=False, visible=False),
+    height=500
 )
 
-# Buttons for Yes / No answers
+# Stream graph with same color pairs
+x_values = list(range(len(questions)))
+stream_fig = go.Figure()
+
+for i in range(len(questions)):
+    stream_fig.add_trace(go.Scatter(
+        x=[i],
+        y=[yes_counts[i]],
+        stackgroup='one',
+        name=f"{questions[i][:20]} - Yes",
+        line=dict(color=color_pairs[i][0])
+    ))
+    stream_fig.add_trace(go.Scatter(
+        x=[i],
+        y=[no_counts[i]],
+        stackgroup='one',
+        name=f"{questions[i][:20]} - No",
+        line=dict(color=color_pairs[i][1])
+    ))
+
+stream_fig.update_layout(title="Stream Graph", height=500, showlegend=False)
+
+# Display both charts side-by-side
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("Yes", use_container_width=True):
-        st.session_state.responses.append((f"Q{q_num}", "Yes"))
-        st.session_state.question_index = (st.session_state.question_index + 1) % len(questions)
-        st.experimental_rerun()
+    st.plotly_chart(bubble_fig, use_container_width=True)
 with col2:
-    if st.button("No", use_container_width=True):
-        st.session_state.responses.append((f"Q{q_num}", "No"))
-        st.session_state.question_index = (st.session_state.question_index + 1) % len(questions)
-        st.experimental_rerun()
-
-# Prepare data for visualization if we have responses
-if st.session_state.responses:
-    data = pd.DataFrame(st.session_state.responses, columns=["Question", "Answer"])
-    counts = data.groupby(["Question", "Answer"]).size().reset_index(name="Count")
-
-    # Safe function to assign colors based on question number and answer
-    def get_color(row):
-        try:
-            idx = int(row["Question"][1:]) - 1  # Extract question number (e.g., Q3 -> 2)
-            if row["Answer"] == "Yes":
-                return color_pairs[idx][0]
-            else:
-                return color_pairs[idx][1]
-        except Exception as e:
-            st.error(f"Error processing row: {row} - {e}")
-            return "#000000"  # fallback black color
-
-    counts["Color"] = counts.apply(get_color, axis=1)
-
-    # Bubble chart
-    bubble_chart = px.scatter(
-        counts,
-        x="Question",
-        y="Count",
-        size="Count",
-        color="Color",
-        color_discrete_map="identity",
-        hover_name="Question",
-        size_max=100,
-        height=550
-    )
-    bubble_chart.update_traces(marker=dict(sizemode="diameter"))
-    bubble_chart.update_layout(margin=dict(t=20, b=20, l=0, r=0))
-
-    # Prepare data for stream graph
-    stream_data = data.groupby(["Question", "Answer"]).size().unstack(fill_value=0).reset_index()
-
-    # Flatten color pairs for stream graph: each question has two colors (Yes and No)
-    stream_colors = []
-    for yes_color, no_color in color_pairs:
-        stream_colors.extend([yes_color, no_color])
-
-    # Adjust colors to match number of columns (excluding 'Question')
-    stream_colors = stream_colors[:len(stream_data.columns) - 1]
-
-    stream_chart = px.area(
-        stream_data,
-        x="Question",
-        y=stream_data.columns[1:],
-        color_discrete_sequence=stream_colors,
-        height=550
-    )
-    stream_chart.update_layout(margin=dict(t=20, b=20, l=0, r=0))
-
-    # Display charts side by side
-    st.markdown("<hr>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        st.plotly_chart(bubble_chart, use_container_width=True)
-    with col2:
-        st.plotly_chart(stream_chart, use_container_width=True)
-else:
-    st.info("Please answer the questions to see the charts.")
+    st.plotly_chart(stream_fig, use_container_width=True)
