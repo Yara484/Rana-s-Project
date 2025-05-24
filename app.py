@@ -1,7 +1,6 @@
-working i guess import streamlit as st
+import streamlit as st
 import pandas as pd
 import plotly.express as px
-import random
 
 # Questions list
 questions = [
@@ -32,32 +31,29 @@ if "question_index" not in st.session_state:
 if "responses" not in st.session_state:
     st.session_state.responses = []
 
-# Title and question
-st.markdown("<h2 style='text-align: center;'>Emotional Reflection Survey</h2>", unsafe_allow_html=True)
-question_number = st.session_state.question_index + 1
-st.markdown(f"<h4 style='text-align: center; font-size:18px;'>(Q{question_number}) {questions[st.session_state.question_index]}</h4>", unsafe_allow_html=True)
+# Question display
+q_num = st.session_state.question_index + 1
+st.markdown(f"<p style='text-align: center; font-size:20px;'>(Q{q_num}) {questions[st.session_state.question_index]}</p>", unsafe_allow_html=True)
 
-# Collect response
+# Answer buttons
 col1, col2 = st.columns(2)
 with col1:
     if st.button("Yes", use_container_width=True):
-        st.session_state.responses.append((f"Q{question_number}", "Yes"))
+        st.session_state.responses.append((f"Q{q_num}", "Yes"))
         st.session_state.question_index = (st.session_state.question_index + 1) % len(questions)
-        st.experimental_rerun()
+        st.rerun()
 with col2:
     if st.button("No", use_container_width=True):
-        st.session_state.responses.append((f"Q{question_number}", "No"))
+        st.session_state.responses.append((f"Q{q_num}", "No"))
         st.session_state.question_index = (st.session_state.question_index + 1) % len(questions)
-        st.experimental_rerun()
+        st.rerun()
 
 # Prepare data for charts
 data = pd.DataFrame(st.session_state.responses, columns=["Question", "Answer"])
-
-# Count responses
 counts = data.groupby(["Question", "Answer"]).size().reset_index(name="Count")
 
 # Assign colors
-counts["Color"] = counts.apply(lambda row: color_pairs[int(row["Question"][1:])-1][0] if row["Answer"] == "Yes" else color_pairs[int(row["Question"][1:])-1][1], axis=1)
+counts["Color"] = counts.apply(lambda row: color_pairs[int(row["Question"][1:]) - 1][0] if row["Answer"] == "Yes" else color_pairs[int(row["Question"][1:]) - 1][1], axis=1)
 
 # Bubble chart
 bubble_chart = px.scatter(
@@ -68,20 +64,20 @@ bubble_chart = px.scatter(
     color="Color",
     color_discrete_map="identity",
     hover_name="Question",
-    size_max=80,
-    height=500
+    size_max=100,
+    height=550
 )
 bubble_chart.update_traces(marker=dict(sizemode="diameter"))
 bubble_chart.update_layout(margin=dict(t=20, b=20, l=0, r=0))
 
-# Streamgraph (Area chart)
+# Stream graph
 stream_data = data.groupby(["Question", "Answer"]).size().unstack(fill_value=0).reset_index()
 stream_chart = px.area(
     stream_data,
     x="Question",
     y=stream_data.columns[1:],
     color_discrete_sequence=[pair for pair in sum(color_pairs, ())],
-    height=500
+    height=550
 )
 stream_chart.update_layout(margin=dict(t=20, b=20, l=0, r=0))
 
