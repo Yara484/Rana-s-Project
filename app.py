@@ -96,10 +96,10 @@ if index < len(questions):
     cols = st.columns([1, 1])
     if cols[0].button("Yes"):
         st.session_state.yes_counts[index] += 1
-        st.session_state.question_index += 1
+        st.session_state.question_index = (st.session_state.question_index + 1) % len(questions)
     if cols[1].button("No"):
         st.session_state.no_counts[index] += 1
-        st.session_state.question_index += 1
+        st.session_state.question_index = (st.session_state.question_index + 1) % len(questions)
 else:
     st.markdown("### Thank you for answering all the questions!")
 
