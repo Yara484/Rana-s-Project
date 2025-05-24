@@ -37,19 +37,19 @@ if 'no_counts' not in st.session_state:
 
 color_pairs = get_color_pairs(len(questions))
 
-# Function to generate bubble chart
+# Function to generate bubble chart with bigger bubbles
 def generate_bubble_chart():
     bubble_x, bubble_y, bubble_size, bubble_color, bubble_label = [], [], [], [], []
     for i in range(len(questions)):
         bubble_x.append(random.uniform(-1, 1) * 10)
         bubble_y.append(random.uniform(-1, 1) * 10)
-        bubble_size.append(st.session_state.yes_counts[i] * 3 + 10)
+        bubble_size.append(st.session_state.yes_counts[i] * 8 + 10)  # Increased multiplier for bigger bubbles
         bubble_color.append(color_pairs[i][0])
         bubble_label.append(f"Q{i+1} - Yes: {st.session_state.yes_counts[i]}")
 
         bubble_x.append(random.uniform(-1, 1) * 10)
         bubble_y.append(random.uniform(-1, 1) * 10)
-        bubble_size.append(st.session_state.no_counts[i] * 3 + 10)
+        bubble_size.append(st.session_state.no_counts[i] * 8 + 10)  # Increased multiplier for bigger bubbles
         bubble_color.append(color_pairs[i][1])
         bubble_label.append(f"Q{i+1} - No: {st.session_state.no_counts[i]}")
 
@@ -88,7 +88,7 @@ def generate_stream_chart():
         ))
     return fig.update_layout(title="Stream Graph", height=500, showlegend=False)
 
-# Display current question, always looping with modulo
+# Display current question, loop infinitely
 index = st.session_state.question_index % len(questions)
 
 st.markdown(f"### Q{index + 1}. {questions[index]}")
