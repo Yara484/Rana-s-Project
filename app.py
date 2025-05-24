@@ -70,7 +70,6 @@ def generate_bubble_chart():
 
 # Function to generate stream graph
 def generate_stream_chart():
-    x_values = list(range(len(questions)))
     fig = go.Figure()
     for i in range(len(questions)):
         fig.add_trace(go.Scatter(
@@ -89,21 +88,20 @@ def generate_stream_chart():
         ))
     return fig.update_layout(title="Stream Graph", height=500, showlegend=False)
 
-# Display current question
-index = st.session_state.question_index
-if index < len(questions):
-    st.markdown(f"### Q{index + 1}. {questions[index]}")
-    cols = st.columns([1, 1])
-    if cols[0].button("Yes"):
-        st.session_state.yes_counts[index] += 1
-        st.session_state.question_index = (st.session_state.question_index + 1) % len(questions)
-    if cols[1].button("No"):
-        st.session_state.no_counts[index] += 1
-        st.session_state.question_index = (st.session_state.question_index + 1) % len(questions)
-else:
-    st.markdown("### Thank you for answering all the questions!")
+# Display current question, always looping with modulo
+index = st.session_state.question_index % len(questions)
 
-# Display both charts
+st.markdown(f"### Q{index + 1}. {questions[index]}")
+
+cols = st.columns([1, 1])
+if cols[0].button("Yes"):
+    st.session_state.yes_counts[index] += 1
+    st.session_state.question_index += 1
+if cols[1].button("No"):
+    st.session_state.no_counts[index] += 1
+    st.session_state.question_index += 1
+
+# Show charts always
 col1, col2 = st.columns(2)
 with col1:
     st.plotly_chart(generate_bubble_chart(), use_container_width=True)
