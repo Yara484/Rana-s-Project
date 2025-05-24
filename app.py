@@ -37,19 +37,20 @@ if 'no_counts' not in st.session_state:
 
 color_pairs = get_color_pairs(len(questions))
 
-# Function to generate bubble chart
+# Function to generate bubble chart with bigger, more scattered bubbles
 def generate_bubble_chart():
     bubble_x, bubble_y, bubble_size, bubble_color, bubble_label = [], [], [], [], []
     for i in range(len(questions)):
-        bubble_x.append(random.uniform(-1, 1) * 10)
-        bubble_y.append(random.uniform(-1, 1) * 10)
-        bubble_size.append(st.session_state.yes_counts[i] * 20 + 30)
+        # Scatter more by using wider random range, e.g. -15 to 15 instead of -10 to 10
+        bubble_x.append(random.uniform(-1, 1) * 15)
+        bubble_y.append(random.uniform(-1, 1) * 15)
+        bubble_size.append(st.session_state.yes_counts[i] * 8 + 10)  # Keep size bigger
         bubble_color.append(color_pairs[i][0])
         bubble_label.append(f"Q{i+1} - Yes: {st.session_state.yes_counts[i]}")
 
-        bubble_x.append(random.uniform(-1, 1) * 10)
-        bubble_y.append(random.uniform(-1, 1) * 10)
-        bubble_size.append(st.session_state.no_counts[i] * 20 + 30)
+        bubble_x.append(random.uniform(-1, 1) * 15)
+        bubble_y.append(random.uniform(-1, 1) * 15)
+        bubble_size.append(st.session_state.no_counts[i] * 8 + 10)
         bubble_color.append(color_pairs[i][1])
         bubble_label.append(f"Q{i+1} - No: {st.session_state.no_counts[i]}")
 
@@ -66,11 +67,16 @@ def generate_bubble_chart():
         ),
         text=bubble_label,
         hoverinfo='text'
-    )]).update_layout(title="Bubble Chart", showlegend=False, height=500, xaxis=dict(visible=False), yaxis=dict(visible=False))
+    )]).update_layout(
+        title="Bubble Chart",
+        showlegend=False,
+        height=500,
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False)
+    )
 
-# Function to generate stream graph with wider width
+# Function to generate wider stream graph
 def generate_stream_chart():
-    x_values = list(range(len(questions)))
     fig = go.Figure()
     for i in range(len(questions)):
         fig.add_trace(go.Scatter(
@@ -90,23 +96,24 @@ def generate_stream_chart():
     return fig.update_layout(
         title="Stream Graph",
         height=500,
-        width=1100,  # Wider width here
+        width=1100,   # wider width
         showlegend=False
     )
 
-# Display current question
-index = st.session_state.question_index
-if index < len(questions):
-    st.markdown(f"### Q{index + 1}. {questions[index]}")
-    cols = st.columns([1, 1])
-    if cols[0].button("Yes"):
-        st.session_state.yes_counts[index] += 1
-        st.session_state.question_index = (st.session_state.question_index + 1) % len(questions)  # loop
-    if cols[1].button("No"):
-        st.session_state.no_counts[index] += 1
-        st.session_state.question_index = (st.session_state.question_index + 1) % len(questions)  # loop
+# Display current question, looping infinitely
+index = st.session_state.question_index % len(questions)
 
-# Display both charts
+st.markdown(f"### Q{index + 1}. {questions[index]}")
+
+cols = st.columns([1, 1])
+if cols[0].button("Yes"):
+    st.session_state.yes_counts[index] += 1
+    st.session_state.question_index += 1
+if cols[1].button("No"):
+    st.session_state.no_counts[index] += 1
+    st.session_state.question_index += 1
+
+# Show charts side by side
 col1, col2 = st.columns(2)
 with col1:
     st.plotly_chart(generate_bubble_chart(), use_container_width=True)
